@@ -1,0 +1,29 @@
+import fs from "fs";
+import path from "path";
+import archiver from "archiver";
+
+// The base project folder we already generated
+const base = path.join(process.cwd(), "e-house-configurator");
+const outputZip = path.join(process.cwd(), "e-house-configurator-backup.zip");
+
+// Create output stream
+const output = fs.createWriteStream(outputZip);
+const archive = archiver("zip", { zlib: { level: 9 } });
+
+output.on("close", () => {
+  console.log(`✅ Backup complete: ${archive.pointer()} total bytes`);
+  console.log(`📦 Archive created at: ${outputZip}`);
+});
+
+archive.on("warning", (err) => { if (err.code !== "ENOENT") throw err; });
+archive.on("error", (err) => { throw err; });
+
+// Pipe archive data to file
+archive.pipe(output);
+
+// Add everything from the project folder
+archive.directory(base, false);
+
+// Finalize archive
+archive.finalize();
+

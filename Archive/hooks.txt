@@ -1,0 +1,67 @@
+// --- Hooks ---
+writeFile(path.join(base, "src/hooks/useSharedComments.js"), `
+import { useEffect, useState } from "react";
+
+// A shared comments store that syncs automatically between tabs/users
+export function useSharedComments() {
+  const [comments, setComments] = useState(() => {
+    const stored = localStorage.getItem("shared-comments");
+    return stored ? JSON.parse(stored) : {};
+  });
+
+  // Save to localStorage whenever comments change
+  useEffect(() => {
+    localStorage.setItem("shared-comments", JSON.stringify(comments));
+    window.dispatchEvent(new Event("comments-updated"));
+  }, [comments]);
+
+  // Listen for external changes (sync across browser tabs)
+  useEffect(() => {
+    const handler = () => {
+      const stored = localStorage.getItem("shared-comments");
+      if (stored) setComments(JSON.parse(stored));
+    };
+    window.addEventListener("comments-updated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("comments-updated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  return [comments, setComments];
+}
+`);
+
+writeFile(path.join(base, "src/hooks/useVersionedDrafts.js"), `
+import { useEffect, useState } from "react";
+
+// Hook to manage versioned project drafts (Engineer-only feature)
+export function useVersionedDrafts() {
+  const [versions, setVersions] = useState(() => {
+    const stored = localStorage.getItem("project-versions");
+    return stored ? JSON.parse(stored) : [];
+  });
+
+  const saveDraft = (data, auto = false) => {
+    const timestamp = new Date().toISOString();
+    const version = { id: timestamp, data, auto };
+    let updated = [version, ...versions];
+    // keep only 10 versions max
+    updated = updated.slice(0, 10);
+    setVersions(updated);
+    localStorage.setItem("project-versions", JSON.stringify(updated));
+  };
+
+  const restoreDraft = (id) => {
+    const v = versions.find(v => v.id === id);
+    return v ? v.data : null;
+  };
+
+  useEffect(() => {
+    localStorage.setItem("project-versions", JSON.stringify(versions));
+  }, [versions]);
+
+  return { versions, saveDraft, restoreDraft };
+}
+`);

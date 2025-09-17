@@ -1,0 +1,79 @@
+// --- Utils ---
+writeFile(path.join(base, "src/utils/exportUtils.js"), `
+import jsPDF from "jspdf";
+import { saveAs } from "file-saver";
+
+// PDF Export with logo + metadata
+export function exportPDF(canvasRef, complianceIssues, equipmentStyles, projectData, comments) {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.width;
+
+  // Logo + company info
+  const logo = "/logo.png";
+  try {
+    doc.addImage(logo, "PNG", 10, 10, 40, 20);
+  } catch (e) {
+    console.warn("⚠️ Could not embed logo, ensure logo.png is accessible.");
+  }
+  doc.setFontSize(12);
+  doc.text("Braeden Inc.", pageWidth - 60, 20);
+  doc.text("www.braeden.com", pageWidth - 60, 28);
+
+  // Contact info (first page only)
+  doc.setFontSize(10);
+  doc.text("Contact: Husam Droubi, SME", 10, 45);
+  doc.text("5650 Guhn Rd Suite 118, Houston, TX 77040 USA", 10, 52);
+  doc.text("(469)343-6287 (C)", 10, 59);
+  doc.text("hadroubi@braeden.com", 10, 66);
+
+  // Compliance summary
+  doc.setFontSize(14);
+  doc.text("Compliance Report", 10, 85);
+  complianceIssues.forEach((issue, i) => {
+    doc.setFontSize(10);
+    doc.text(\`\${i+1}. [\${issue.type.toUpperCase()}] \${issue.message}\`, 10, 95 + i*7);
+  });
+
+  doc.save("compliance-report.pdf");
+}
+
+// BOM / CSV Export
+export function exportBOM(equipment, equipmentStyles, getPosition, comments, complianceIssues) {
+  let rows = ["Name,Width,Length,Height,X,Y,Z,Has Comments,Compliant"];
+  equipment.forEach(eq => {
+    const style = equipmentStyles[eq.name] || {};
+    const [x,y,z] = getPosition(eq);
+    const hasComments = (comments[eq.id || eq.name] || []).length > 0 ? "Yes" : "No";
+    const hasError = complianceIssues.some(i => i.equipmentId === (eq.id || eq.name) && i.type === "error");
+    const compliant = hasError ? "No" : "Yes";
+    rows.push(\`\${eq.name},\${style.w||0},\${style.l||0},\${style.h||0},\${x},\${y},\${z},\${hasComments},\${compliant}\`);
+  });
+  const blob = new Blob([rows.join("\\n")], { type: "text/csv;charset=utf-8" });
+  saveAs(blob, "bom.csv");
+}
+
+// JSON (GLTF-like) Export
+export function exportGLTF(equipment, equipmentStyles, complianceIssues, getPosition, comments) {
+  const data = equipment.map(eq => ({
+    id: eq.id || eq.name,
+    name: eq.name,
+    style: equipmentStyles[eq.name] || {},
+    position: getPosition(eq),
+    comments: comments[eq.id || eq.name] || [],
+    compliance: complianceIssues.filter(i => i.equipmentId === (eq.id || eq.name))
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  saveAs(blob, "project.json");
+}
+
+// DXF Export (simplified placeholder)
+export function exportDXF(equipment, equipmentStyles, complianceIssues, container) {
+  let dxf = "0\\nSECTION\\n2\\nHEADER\\n0\\nENDSEC\\n0\\nSECTION\\n2\\nTABLES\\n0\\nENDSEC\\n0\\nSECTION\\n2\\nBLOCKS\\n0\\nENDSEC\\n0\\nSECTION\\n2\\nENTITIES\\n";
+  equipment.forEach(eq => {
+    dxf += \`0\\n3DFACE\\n8\\n0\\n10\\n0\\n20\\n0\\n30\\n0\\n\`; // minimal placeholder
+  });
+  dxf += "0\\nENDSEC\\n0\\nEOF";
+  const blob = new Blob([dxf], { type: "application/dxf" });
+  saveAs(blob, "layout.dxf");
+}
+`);

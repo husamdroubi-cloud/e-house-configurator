@@ -1,0 +1,229 @@
+// --- Components ---
+writeFile(path.join(base, "src/components/EquipmentCard.jsx"), `
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import "../styles/compliance.css";
+
+export default function EquipmentCard({ eq, equipmentStyles = {}, complianceIssues = [], comments = {}, onClick }) {
+  const specs = equipmentStyles[eq.name] || {};
+  const eqId = eq.id || eq.name;
+
+  const iconMap = {
+    Transformer: "⚡",
+    Switchgear: "🗄️",
+    Generator: "🔋",
+    "Motorized Generators": "🔋",
+    "Fuel Cell": "🔬"
+  };
+  const icon = iconMap[eq.name] || "📦";
+
+  const hasError = complianceIssues.some(i => i.equipmentId === eqId && i.type === "error");
+  const hasWarning = complianceIssues.some(i => i.equipmentId === eqId && i.type === "warning");
+
+  let badgeClass = "badge badge-green";
+  let status = "Compliant";
+  if (hasError) { badgeClass = "badge badge-red"; status = "Error"; }
+  else if (hasWarning) { badgeClass = "badge badge-amber"; status = "Warning"; }
+
+  const unresolvedCount = (comments[eqId] || []).filter(c => !c.resolved).length;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card className="p-4 cursor-pointer hover:shadow-lg transition" onClick={onClick}>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                <span>{icon} {eq.name}</span>
+                <span className={badgeClass}>{status}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {unresolvedCount > 0 && <span>📌 {unresolvedCount} comments</span>}
+            </CardContent>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent>
+          <pre className="text-xs max-w-xs whitespace-pre-wrap">{JSON.stringify(specs, null, 2)}</pre>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+`);
+
+writeFile(path.join(base, "src/components/CommentSidebar.jsx"), `
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+export default function CommentSidebar({ equipmentId, comments = {}, setComments, role = "engineer" }) {
+  const [newComment, setNewComment] = useState("");
+  const [replyTo, setReplyTo] = useState(null);
+  const [showResolved, setShowResolved] = useState(false);
+
+  if (!equipmentId) return null;
+  const eqComments = comments[equipmentId] || [];
+
+  const addComment = (text, parentId = null) => {
+    if (!text.trim()) return;
+    const newC = {
+      id: Date.now().toString(),
+      role,
+      text,
+      timestamp: new Date().toISOString(),
+      resolved: false,
+      parentId
+    };
+    setComments(prev => ({
+      ...prev,
+      [equipmentId]: [...(prev[equipmentId] || []), newC]
+    }));
+    setNewComment("");
+    setReplyTo(null);
+  };
+
+  const toggleResolved = (id) => {
+    setComments(prev => ({
+      ...prev,
+      [equipmentId]: prev[equipmentId].map(c => c.id === id ? { ...c, resolved: !c.resolved } : c)
+    }));
+  };
+
+  const renderComment = (c, depth = 0) => (
+    <div key={c.id} className={\`mb-2 pl-\${depth * 4}\`}>
+      <div className="p-2 border rounded bg-gray-50 flex justify-between items-start">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-sm max-w-xs truncate">{c.text}</span>
+            </TooltipTrigger>
+            <TooltipContent><span className="text-xs">{c.text}</span></TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <span className="text-xs text-gray-500 ml-2">
+          {c.role === "engineer" ? "👷 Engineer" : c.role === "pmadmin" ? "📋 PM/Admin" : "👤 Client"} – {new Date(c.timestamp).toLocaleString()}
+        </span>
+      </div>
+      <div className="flex space-x-2 mt-1">
+        {(role === "engineer" || role === "pmadmin") && (
+          <Button size="xs" variant="outline" onClick={() => setReplyTo(c.id)}>Reply</Button>
+        )}
+        {(role === "engineer" || role === "pmadmin") && (
+          <Button size="xs" variant={c.resolved ? "secondary" : "outline"} onClick={() => toggleResolved(c.id)}>
+            {c.resolved ? "Reopen" : "Resolve"}
+          </Button>
+        )}
+      </div>
+      {eqComments.filter(r => r.parentId === c.id).map(r => renderComment(r, depth + 1))}
+      {replyTo === c.id && (
+        <div className="mt-2 flex space-x-2">
+          <Input value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Reply..." />
+          <Button size="sm" onClick={() => addComment(newComment, c.id)}>Add</Button>
+        </div>
+      )}
+    </div>
+  );
+
+  const topLevel = eqComments.filter(c => !c.parentId && (showResolved || !c.resolved));
+
+  return (
+    <div className="fixed right-0 top-0 w-96 h-full bg-white border-l p-4 overflow-y-auto">
+      <h3 className="text-lg font-bold mb-2">Comments for {equipmentId}</h3>
+      {(role === "engineer" || role === "pmadmin") && (
+        <Button size="sm" onClick={() => setShowResolved(!showResolved)}>
+          {showResolved ? "Hide Resolved" : "Show Resolved"}
+        </Button>
+      )}
+      <div className="mt-4 space-y-2">
+        {topLevel.map(c => renderComment(c))}
+      </div>
+      {(role === "engineer" || role === "pmadmin") && (
+        <div className="mt-4 flex space-x-2">
+          <Input value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment..." />
+          <Button onClick={() => addComment(newComment)}>Add</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+`);
+
+writeFile(path.join(base, "src/components/SidebarNav.jsx"), `
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+
+export default function SidebarNav({ step, setStep }) {
+  const steps = [
+    { id: 1, label: "Project Setup" },
+    { id: 2, label: "Equipment Selection" },
+    { id: 3, label: "Layout Design" },
+    { id: 4, label: "Compliance & Review" },
+    { id: 5, label: "Export & Handoff" }
+  ];
+
+  return (
+    <>
+      <div className="sidebar">
+        <h2 className="text-lg font-bold mb-4">Wizard</h2>
+        {steps.map(s => (
+          <Button
+            key={s.id}
+            variant={step === s.id ? "default" : "outline"}
+            className="w-full justify-start"
+            onClick={() => setStep(s.id)}
+          >
+            {s.id}. {s.label}
+          </Button>
+        ))}
+      </div>
+      <div className="sidebar-collapsed">
+        <Menu className="w-6 h-6" />
+      </div>
+    </>
+  );
+}
+`);
+
+writeFile(path.join(base, "src/components/TabsNav.jsx"), `
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export default function TabsNav({ activeTab, setActiveTab }) {
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="mb-4">
+        <TabsTrigger value="2d">2D View</TabsTrigger>
+        <TabsTrigger value="3d">3D View</TabsTrigger>
+        <TabsTrigger value="compliance">Compliance View</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+}
+`);
+
+writeFile(path.join(base, "src/components/Toolbar.jsx"), `
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { FileDown, FileSpreadsheet, FileJson, Ruler, Package, Import } from "lucide-react";
+
+export default function Toolbar({ onExportPDF, onExportBOM, onExportJSON, onExportDXF, onExportAll, onImport }) {
+  return (
+    <div className="flex justify-end space-x-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="default"><Package className="w-4 h-4 mr-2" /> Exports</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={onExportPDF}><FileDown className="w-4 h-4 mr-2" /> Export PDF</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportBOM}><FileSpreadsheet className="w-4 h-4 mr-2" /> Export BOM (CSV)</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportJSON}><FileJson className="w-4 h-4 mr-2" /> Export Project (JSON)</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportDXF}><Ruler className="w-4 h-4 mr-2" /> Export CAD (DXF)</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportAll}><Package className="w-4 h-4 mr-2" /> Export All</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button variant="outline" onClick={onImport}><Import className="w-4 h-4 mr-2" /> Import Project</Button>
+    </div>
+  );
+}
+`);

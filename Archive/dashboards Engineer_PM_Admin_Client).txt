@@ -1,0 +1,200 @@
+// --- Dashboards ---
+writeFile(path.join(base, "src/dashboards/EngineerDashboard.jsx"), `
+import { useState } from "react";
+import SidebarNav from "../components/SidebarNav";
+import TabsNav from "../components/TabsNav";
+import Toolbar from "../components/Toolbar";
+import EquipmentCard from "../components/EquipmentCard";
+import CommentSidebar from "../components/CommentSidebar";
+import { useSharedComments } from "../hooks/useSharedComments";
+import { useVersionedDrafts } from "../hooks/useVersionedDrafts";
+import { exportPDF, exportBOM, exportGLTF, exportDXF } from "../utils/exportUtils";
+import "../styles/typography.css";
+import "../styles/responsive.css";
+import "../styles/focusMode.css";
+
+export default function EngineerDashboard() {
+  const [step, setStep] = useState(3);
+  const [activeTab, setActiveTab] = useState("2d");
+  const [focusMode, setFocusMode] = useState(false);
+  const [highlighted, setHighlighted] = useState(null);
+  const [equipment, setEquipment] = useState([]);
+  const [equipmentStyles, setEquipmentStyles] = useState({});
+  const [complianceIssues, setComplianceIssues] = useState([]);
+  const [selectedEq, setSelectedEq] = useState(null);
+  const [comments, setComments] = useSharedComments();
+  const { saveDraft } = useVersionedDrafts();
+
+  const highlightClass = (id) => highlighted === id ? "focus-highlight" : (focusMode ? "focus-dimmed" : "");
+
+  const handleExportAll = () => {
+    exportPDF(null, complianceIssues, equipmentStyles, { equipment }, comments);
+    exportBOM(equipment, equipmentStyles, () => [0,0,0], comments, complianceIssues);
+    exportGLTF(equipment, equipmentStyles, complianceIssues, () => [0,0,0], comments);
+    exportDXF(equipment, equipmentStyles, complianceIssues, { w: 10, l: 20, h: 5 });
+    saveDraft({ equipment, equipmentStyles, complianceIssues, comments }, true);
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      <SidebarNav step={step} setStep={setStep} />
+      <div className="flex-1 p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="h1">Engineer Dashboard</h1>
+          <Toolbar
+            onExportPDF={() => exportPDF(null, complianceIssues, equipmentStyles, { equipment }, comments)}
+            onExportBOM={() => exportBOM(equipment, equipmentStyles, () => [0,0,0], comments, complianceIssues)}
+            onExportJSON={() => exportGLTF(equipment, equipmentStyles, complianceIssues, () => [0,0,0], comments)}
+            onExportDXF={() => exportDXF(equipment, equipmentStyles, complianceIssues, { w: 10, l: 20, h: 5 })}
+            onExportAll={handleExportAll}
+            onImport={() => {}}
+          />
+        </div>
+        {step === 3 && <TabsNav activeTab={activeTab} setActiveTab={setActiveTab} />}
+        <div className={\`dashboard-section \${highlightClass("layout")}\`}>
+          <h2 className="h2">Layout Editor</h2>
+          <div className="card-grid">
+            {equipment.map(eq => (
+              <EquipmentCard
+                key={eq.id || eq.name}
+                eq={eq}
+                equipmentStyles={equipmentStyles}
+                complianceIssues={complianceIssues}
+                comments={comments}
+                onClick={() => setSelectedEq(eq.id || eq.name)}
+              />
+            ))}
+          </div>
+        </div>
+        <div className={\`dashboard-section \${highlightClass("compliance")}\`}>
+          <h2 className="h2">Compliance Overview</h2>
+        </div>
+        <CommentSidebar equipmentId={selectedEq} comments={comments} setComments={setComments} role="engineer" />
+      </div>
+    </div>
+  );
+}
+`);
+
+writeFile(path.join(base, "src/dashboards/PMAdminDashboard.jsx"), `
+import { useState } from "react";
+import SidebarNav from "../components/SidebarNav";
+import TabsNav from "../components/TabsNav";
+import Toolbar from "../components/Toolbar";
+import EquipmentCard from "../components/EquipmentCard";
+import CommentSidebar from "../components/CommentSidebar";
+import { useSharedComments } from "../hooks/useSharedComments";
+import { useVersionedDrafts } from "../hooks/useVersionedDrafts";
+import { exportPDF, exportBOM, exportGLTF, exportDXF } from "../utils/exportUtils";
+import "../styles/typography.css";
+import "../styles/responsive.css";
+import "../styles/focusMode.css";
+
+export default function PMAdminDashboard() {
+  const [step, setStep] = useState(3);
+  const [activeTab, setActiveTab] = useState("2d");
+  const [focusMode, setFocusMode] = useState(false);
+  const [highlighted, setHighlighted] = useState(null);
+  const [selectedEq, setSelectedEq] = useState(null);
+  const [comments, setComments] = useSharedComments();
+  const [equipment, setEquipment] = useState([]);
+  const [equipmentStyles, setEquipmentStyles] = useState({});
+  const [complianceIssues, setComplianceIssues] = useState([]);
+  const { saveDraft } = useVersionedDrafts();
+
+  const highlightClass = (id) => highlighted === id ? "focus-highlight" : (focusMode ? "focus-dimmed" : "");
+
+  const handleExportAll = () => {
+    exportPDF(null, complianceIssues, equipmentStyles, { equipment }, comments);
+    exportBOM(equipment, equipmentStyles, () => [0,0,0], comments, complianceIssues);
+    exportGLTF(equipment, equipmentStyles, complianceIssues, () => [0,0,0], comments);
+    exportDXF(equipment, equipmentStyles, complianceIssues, { w: 10, l: 20, h: 5 });
+    saveDraft({ equipment, equipmentStyles, complianceIssues, comments }, true);
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      <SidebarNav step={step} setStep={setStep} />
+      <div className="flex-1 p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="h1">PM/Admin Dashboard</h1>
+          <Toolbar
+            onExportPDF={() => exportPDF(null, complianceIssues, equipmentStyles, { equipment }, comments)}
+            onExportBOM={() => exportBOM(equipment, equipmentStyles, () => [0,0,0], comments, complianceIssues)}
+            onExportJSON={() => exportGLTF(equipment, equipmentStyles, complianceIssues, () => [0,0,0], comments)}
+            onExportDXF={() => exportDXF(equipment, equipmentStyles, complianceIssues, { w: 10, l: 20, h: 5 })}
+            onExportAll={handleExportAll}
+            onImport={() => {}}
+          />
+        </div>
+        {step === 3 && <TabsNav activeTab={activeTab} setActiveTab={setActiveTab} />}
+        <div className={\`dashboard-section \${highlightClass("project")}\`}>
+          <h2 className="h2">Project Details</h2>
+          <div className="card-grid">
+            {Object.keys(comments).map(eqId => (
+              <EquipmentCard
+                key={eqId}
+                eq={{ id: eqId, name: eqId }}
+                equipmentStyles={equipmentStyles}
+                complianceIssues={complianceIssues}
+                comments={comments}
+                onClick={() => setSelectedEq(eqId)}
+              />
+            ))}
+          </div>
+        </div>
+        <CommentSidebar equipmentId={selectedEq} comments={comments} setComments={setComments} role="pmadmin" />
+      </div>
+    </div>
+  );
+}
+`);
+
+writeFile(path.join(base, "src/dashboards/ClientDashboard.jsx"), `
+import { useState } from "react";
+import SidebarNav from "../components/SidebarNav";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import "../styles/typography.css";
+import "../styles/responsive.css";
+import "../styles/focusMode.css";
+
+export default function ClientDashboard({ equipment = [] }) {
+  const [step, setStep] = useState(1);
+  const [focusMode, setFocusMode] = useState(false);
+  const [highlighted, setHighlighted] = useState(null);
+
+  const highlightClass = (id) => highlighted === id ? "focus-highlight" : (focusMode ? "focus-dimmed" : "");
+
+  const iconMap = {
+    Transformer: "⚡",
+    Switchgear: "🗄️",
+    Generator: "🔋",
+    "Motorized Generators": "🔋",
+    "Fuel Cell": "🔬"
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      <SidebarNav step={step} setStep={setStep} />
+      <div className="flex-1 p-6 space-y-6">
+        <h1 className="h1">Client Dashboard</h1>
+        <div id="overview-section" className={\`dashboard-section \${highlightClass("overview")}\`}>
+          <h2 className="h2">Project Overview</h2>
+          <div className="card-grid">
+            {equipment.map(eq => (
+              <Card key={eq.id || eq.name} className="p-4">
+                <CardHeader>
+                  <CardTitle>{iconMap[eq.name] || "📦"} {eq.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <span>Equipment details here</span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+`);
