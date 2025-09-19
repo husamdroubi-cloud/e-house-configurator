@@ -6,3 +6,4 @@ export default defineConfig({
   plugins: [react()],
   base: '/e-house-configurator/',  // 👈 required for GitHub Pages
 })
+
