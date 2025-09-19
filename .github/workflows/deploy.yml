@@ -22,11 +22,12 @@ jobs:
         run: npm install
 
       - name: Build project
-        run: npx vite build   # 👈 use npx here
+        run: npx vite build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          force_orphan: true
 
