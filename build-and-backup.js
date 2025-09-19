@@ -1,0 +1,1 @@
+console.log("Pilot build script placeholder");
