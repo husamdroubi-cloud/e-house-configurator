@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/e-house-configurator/',  // 👈 important for GitHub Pages
-  server: { port: 5173, open: true }
-});
+  base: '/e-house-configurator/',  // 👈 required for GitHub Pages
+})
