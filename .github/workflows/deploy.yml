@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: false   # 👈 important for gh-pages push
+          persist-credentials: false   # 👈 key fix for gh-pages push
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -31,5 +31,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          publish_branch: gh-pages   # 👈 create/use gh-pages branch
-          force_orphan: true         # 👈 push clean branch
+          publish_branch: gh-pages
+          force_orphan: true
