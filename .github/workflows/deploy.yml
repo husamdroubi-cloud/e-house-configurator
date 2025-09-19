@@ -1,11 +1,3 @@
-  - name: Deploy to GitHub Pages
-  uses: peaceiris/actions-gh-pages@v3
-  with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-    publish_dir: ./dist
-    publish_branch: gh-pages   #   explicitly set branch
-    force_orphan: true         #   wipe history and push clean
-
 name: Deploy to GitHub Pages
 
 on:
@@ -32,10 +24,10 @@ jobs:
       - name: Build project
         run: npx vite build
 
-  - name: Deploy to GitHub Pages
-  uses: peaceiris/actions-gh-pages@v3
-  with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-    publish_dir: ./dist
-    publish_branch: gh-pages   # 👈 explicitly set branch
-    force_orphan: true         # 👈 wipe history and push clean
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages   # explicitly set branch
+          force_orphan: true         # wipe history and push clean
