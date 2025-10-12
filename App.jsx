@@ -1,80 +1,37 @@
-cat > App.jsx <<'EOF'
-import React from "react";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
 import { usePersistentState } from "./src/hooks/usePersistentState";
 import ConfigEditor from "./src/components/ConfigEditor";
 import ExportButtons from "./src/components/ExportButtons";
 
-export default function App() {
-  // --- Step 2: persistent state setup ---
-  const initialConfig = {
-    categories: {
-      Generators: {
-        "Diesel Generators": [
-          {
-            manufacturerPN: "DG-100",
-            manufacturer: "Caterpillar",
-            braedenPN: "BR-001",
-            price: 50000,
-            rating: "100kVA",
-            notes: "Standard backup generator",
-          },
-        ],
-      },
-    },
-  };
+const DEFAULT_CONFIG = {
+  categories: {
+    Generators: {
+      "Diesel Generators": [
+        { id: "gen-1", manufacturerPN: "GEN-1000", rating: "1000 kW", price: 123456.78, notes: "Initial default item" }
+      ]
+    }
+  }
+};
 
-  const [config, setConfig] = usePersistentState(
-    "engineer-config",
-    initialConfig
-  );
-
-  // --- Step 3: render with editor + export ---
+function Home() {
+  const [config, setConfig] = usePersistentState("config", DEFAULT_CONFIG);
   return (
-    <div
-      style={{
-        fontFamily: "Inter, sans-serif",
-        padding: "24px",
-        maxWidth: "900px",
-        margin: "0 auto",
-      }}
-    >
-      <h1 style={{ textAlign: "center" }}>E-House Configurator Portal</h1>
-
-      <div
-        style={{
-          padding: 12,
-          margin: "12px 0",
-          border: "1px solid #e5e5e5",
-          borderRadius: 8,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 12,
-          }}
-        >
-          <h2 style={{ margin: 0 }}>Engineer Dashboard</h2>
-          <ExportButtons config={config} />
-        </div>
-
+    <div style={{ padding: 20, fontFamily: "system-ui, sans-serif" }}>
+      <h1 style={{ marginBottom: 8 }}>e-house-configurator</h1>
+      <nav style={{marginBottom:12}}><Link to="/">Home</Link></nav>
+      <div style={{ display: "grid", gap: 16, maxWidth: 800 }}>
         <ConfigEditor config={config} onChange={setConfig} />
+        <ExportButtons config={config} />
       </div>
-
-      <pre
-        style={{
-          background: "#f6f6f6",
-          padding: 12,
-          borderRadius: 6,
-          fontSize: 13,
-          overflowX: "auto",
-        }}
-      >
-        {JSON.stringify(config, null, 2)}
-      </pre>
     </div>
   );
 }
-EOF
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
