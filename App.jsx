@@ -1,88 +1,80 @@
-import React, { useState } from "react";
+cat > App.jsx <<'EOF'
+import React from "react";
+import { usePersistentState } from "./src/hooks/usePersistentState";
+import ConfigEditor from "./src/components/ConfigEditor";
+import ExportButtons from "./src/components/ExportButtons";
 
 export default function App() {
-  const [step, setStep] = useState("home");
+  // --- Step 2: persistent state setup ---
+  const initialConfig = {
+    categories: {
+      Generators: {
+        "Diesel Generators": [
+          {
+            manufacturerPN: "DG-100",
+            manufacturer: "Caterpillar",
+            braedenPN: "BR-001",
+            price: 50000,
+            rating: "100kVA",
+            notes: "Standard backup generator",
+          },
+        ],
+      },
+    },
+  };
 
+  const [config, setConfig] = usePersistentState(
+    "engineer-config",
+    initialConfig
+  );
+
+  // --- Step 3: render with editor + export ---
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "Arial, sans-serif" }}>
-      {/* Sidebar */}
-      <aside
+    <div
+      style={{
+        fontFamily: "Inter, sans-serif",
+        padding: "24px",
+        maxWidth: "900px",
+        margin: "0 auto",
+      }}
+    >
+      <h1 style={{ textAlign: "center" }}>E-House Configurator Portal</h1>
+
+      <div
         style={{
-          width: "220px",
-          background: "#f4f4f4",
-          padding: "20px",
-          borderRight: "1px solid #ddd",
+          padding: 12,
+          margin: "12px 0",
+          border: "1px solid #e5e5e5",
+          borderRadius: 8,
         }}
       >
-        <h2>⚡ E-House</h2>
-        <nav>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li>
-              <button onClick={() => setStep("home")} style={navBtnStyle}>
-                Home
-              </button>
-            </li>
-            <li>
-              <button onClick={() => setStep("layout")} style={navBtnStyle}>
-                Layout
-              </button>
-            </li>
-            <li>
-              <button onClick={() => setStep("equipment")} style={navBtnStyle}>
-                Equipment
-              </button>
-            </li>
-            <li>
-              <button onClick={() => setStep("summary")} style={navBtnStyle}>
-                Summary
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Engineer Dashboard</h2>
+          <ExportButtons config={config} />
+        </div>
 
-      {/* Main Content */}
-      <main style={{ flex: 1, padding: "30px" }}>
-        {step === "home" && (
-          <div>
-            <h1>🏠 Welcome to E-House Configurator</h1>
-            <p>Use the sidebar to start configuring your e-house.</p>
-          </div>
-        )}
+        <ConfigEditor config={config} onChange={setConfig} />
+      </div>
 
-        {step === "layout" && (
-          <div>
-            <h1>📐 Layout Configuration</h1>
-            <p>Define the structure and layout of your E-House.</p>
-          </div>
-        )}
-
-        {step === "equipment" && (
-          <div>
-            <h1>🔌 Equipment Selection</h1>
-            <p>Choose the equipment and systems for your E-House.</p>
-          </div>
-        )}
-
-        {step === "summary" && (
-          <div>
-            <h1>📊 Summary</h1>
-            <p>Review your configuration before saving/exporting.</p>
-          </div>
-        )}
-      </main>
+      <pre
+        style={{
+          background: "#f6f6f6",
+          padding: 12,
+          borderRadius: 6,
+          fontSize: 13,
+          overflowX: "auto",
+        }}
+      >
+        {JSON.stringify(config, null, 2)}
+      </pre>
     </div>
   );
 }
-
-const navBtnStyle = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  padding: "10px",
-  marginBottom: "5px",
-  background: "none",
-  border: "1px solid #ccc",
-  borderRadius: "5px",
-  cursor: "pointer",
-};
+EOF
