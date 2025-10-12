@@ -1,88 +1,37 @@
-import React, { useState } from "react";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { usePersistentState } from "./src/hooks/usePersistentState";
+import ConfigEditor from "./src/components/ConfigEditor";
+import ExportButtons from "./src/components/ExportButtons";
 
-export default function App() {
-  const [step, setStep] = useState("home");
+const DEFAULT_CONFIG = {
+  categories: {
+    Generators: {
+      "Diesel Generators": [
+        { id: "gen-1", manufacturerPN: "GEN-1000", rating: "1000 kW", price: 123456.78, notes: "Initial default item" }
+      ]
+    }
+  }
+};
 
+function Home() {
+  const [config, setConfig] = usePersistentState("config", DEFAULT_CONFIG);
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "Arial, sans-serif" }}>
-      {/* Sidebar */}
-      <aside
-        style={{
-          width: "220px",
-          background: "#f4f4f4",
-          padding: "20px",
-          borderRight: "1px solid #ddd",
-        }}
-      >
-        <h2>⚡ E-House</h2>
-        <nav>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li>
-              <button onClick={() => setStep("home")} style={navBtnStyle}>
-                Home
-              </button>
-            </li>
-            <li>
-              <button onClick={() => setStep("layout")} style={navBtnStyle}>
-                Layout
-              </button>
-            </li>
-            <li>
-              <button onClick={() => setStep("equipment")} style={navBtnStyle}>
-                Equipment
-              </button>
-            </li>
-            <li>
-              <button onClick={() => setStep("summary")} style={navBtnStyle}>
-                Summary
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main style={{ flex: 1, padding: "30px" }}>
-        {step === "home" && (
-          <div>
-            <h1>🏠 Welcome to E-House Configurator</h1>
-            <p>Use the sidebar to start configuring your e-house.</p>
-          </div>
-        )}
-
-        {step === "layout" && (
-          <div>
-            <h1>📐 Layout Configuration</h1>
-            <p>Define the structure and layout of your E-House.</p>
-          </div>
-        )}
-
-        {step === "equipment" && (
-          <div>
-            <h1>🔌 Equipment Selection</h1>
-            <p>Choose the equipment and systems for your E-House.</p>
-          </div>
-        )}
-
-        {step === "summary" && (
-          <div>
-            <h1>📊 Summary</h1>
-            <p>Review your configuration before saving/exporting.</p>
-          </div>
-        )}
-      </main>
+    <div style={{ padding: 20, fontFamily: "system-ui, sans-serif" }}>
+      <h1 style={{ marginBottom: 8 }}>e-house-configurator</h1>
+      <nav style={{marginBottom:12}}><Link to="/">Home</Link></nav>
+      <div style={{ display: "grid", gap: 16, maxWidth: 800 }}>
+        <ConfigEditor config={config} onChange={setConfig} />
+        <ExportButtons config={config} />
+      </div>
     </div>
   );
 }
 
-const navBtnStyle = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  padding: "10px",
-  marginBottom: "5px",
-  background: "none",
-  border: "1px solid #ccc",
-  borderRadius: "5px",
-  cursor: "pointer",
-};
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
