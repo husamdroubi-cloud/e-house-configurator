@@ -1,4 +1,9 @@
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import RoleLayout from "./src/routes/RoleLayout";
+import EngineerDashboard from "./src/dashboards/EngineerDashboard";
+import PMAdminDashboard from "./src/dashboards/PMAdminDashboard";
+import ClientDashboard from "./src/dashboards/ClientDashboard";
 import { usePersistentState } from "./src/hooks/usePersistentState";
 import ConfigEditor from "./src/components/ConfigEditor";
 import ExportButtons from "./src/components/ExportButtons";
@@ -16,13 +21,9 @@ const DEFAULT_CONFIG = {
 function Home() {
   const [config, setConfig] = usePersistentState("config", DEFAULT_CONFIG);
   return (
-    <div style={{ padding: 20, fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ marginBottom: 8 }}>e-house-configurator</h1>
-      <nav style={{marginBottom:12}}><Link to="/">Home</Link></nav>
-      <div style={{ display: "grid", gap: 16, maxWidth: 800 }}>
-        <ConfigEditor config={config} onChange={setConfig} />
-        <ExportButtons config={config} />
-      </div>
+    <div style={{ display: "grid", gap: 16, maxWidth: 900 }}>
+      <ConfigEditor config={config} onChange={setConfig} />
+      <ExportButtons config={config} />
     </div>
   );
 }
@@ -30,8 +31,12 @@ function Home() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<RoleLayout />}>
+        <Route index element={<Home />} />
+        <Route path="engineer" element={<EngineerDashboard />} />
+        <Route path="pmadmin" element={<PMAdminDashboard />} />
+        <Route path="client" element={<ClientDashboard />} />
+      </Route>
     </Routes>
   );
 }
