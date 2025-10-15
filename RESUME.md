@@ -46,3 +46,27 @@ npm run deploy
 # or
 npx gh-pages -d dist
 
+
+---
+
+## 🧭 How to Resume Work (BMad Orchestrator)
+
+To continue exactly from this checkpoint:
+
+1. **Open ChatGPT**
+2. Go to **Explore GPTs → My GPTs**
+3. Select **bmad** (the orchestrator for e-house-configurator)
+4. Once BMad opens, say:
+   > “Resume from RESUME.md checkpoint.”
+
+BMad will automatically:
+- Reload your repo sync context.
+- Provide non-destructive Git + integration steps.
+- Guide incremental commits and deployment for `e-house-configurator`.
+
+If BMad doesn’t appear under “My GPTs”, start a new chat and type:
+> “Switch to bmad orchestrator for e-house-configurator.”
+
+---
+
+💡 *Tip:* Always commit and push before closing a session — that keeps your repo state perfectly restorable.
