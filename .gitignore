@@ -4,3 +4,27 @@ dist/
 .vite/
 main.jsx.bak
 main.jsx.fixbak
+
+# --- repo cleanup hardening ---
+# build artefacts
+dist/
+# dependencies
+node_modules/
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# ad-hoc backups
+*.bak
+*.prev
+*.orig
+*.rej
+*.tmp
+# gh-pages cache
+.cache/
